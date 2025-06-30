@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Hotel Gacha</title>
   <style>
     html, body {
@@ -25,40 +25,15 @@
 
     .wheel-container {
       position: relative;
-      width: 300px;
-      height: 300px;
+      width: 400px;
+      height: 400px;
     }
 
-    .wheel {
-      width: 100%;
-      height: 100%;
-      border: 12px solid #444;
+    canvas {
       border-radius: 50%;
-      position: relative;
       box-shadow: 0 0 30px #ff0;
-      transition: transform 3s ease-out;
+      background-color: #fff;
     }
-
-    .light {
-      width: 25px;
-      height: 25px;
-      background: red;
-      border-radius: 50%;
-      position: absolute;
-      animation: blink 0.5s infinite alternate;
-    }
-
-    @keyframes blink {
-      from { opacity: 1; }
-      to { opacity: 0.3; }
-    }
-
-    .light:nth-child(1) { top: -12px; left: 50%; transform: translateX(-50%); }
-    .light:nth-child(2) { top: 25px; right: -12px; }
-    .light:nth-child(3) { bottom: 25px; right: -12px; }
-    .light:nth-child(4) { bottom: -12px; left: 50%; transform: translateX(-50%); }
-    .light:nth-child(5) { bottom: 25px; left: -12px; }
-    .light:nth-child(6) { top: 25px; left: -12px; }
 
     button {
       margin-top: 30px;
@@ -82,56 +57,98 @@
 
   <h1>🎰 Hotel Gacha Wheel</h1>
   <div class="wheel-container">
-    <div class="wheel" id="wheel">
-      <div class="light"></div>
-      <div class="light"></div>
-      <div class="light"></div>
-      <div class="light"></div>
-      <div class="light"></div>
-      <div class="light"></div>
-    </div>
+    <canvas id="wheel" width="400" height="400"></canvas>
   </div>
 
-  <button onclick="spinWheel()">Spin Now</button>
+  <button onclick="spin()">Spin Now</button>
   <div class="result" id="result"></div>
 
-  <!-- ✅ New working spin sound -->
   <audio id="spinSound" src="https://cdn.pixabay.com/audio/2023/01/05/audio_ae0dbecc15.mp3"></audio>
 
   <script>
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const result = document.getElementById("result");
+    const spinSound = document.getElementById("spinSound");
+
     const prizes = [
-      "🎉 10% discount on room",
-      "🍽️ Free breakfast",
-      "🏨 Free room upgrade",
-      "🧖 Free sauna pass",
-      "💸 ฿100 discount",
-      "☕ Free welcome drink",
-      "🎁 Special hotel gift",
-      "😅 No prize this time"
+      "10% Discount",
+      "Free Breakfast",
+      "Room Upgrade",
+      "Free Sauna",
+      "฿100 Off",
+      "Free Drink",
+      "Hotel Gift",
+      "No Prize"
     ];
 
-    function spinWheel() {
-      const wheel = document.getElementById("wheel");
-      const sound = document.getElementById("spinSound");
-      const result = document.getElementById("result");
+    const colors = [
+      "#f44336", "#e91e63", "#9c27b0", "#3f51b5",
+      "#2196f3", "#4caf50", "#ff9800", "#795548"
+    ];
 
-      result.textContent = ""; // Clear previous result
-      wheel.style.transform = "rotate(0deg)"; // Reset rotation
-      setTimeout(() => {
-        const deg = 1440 + Math.floor(Math.random() * 360); // 4 full spins + random
-        wheel.style.transition = "transform 3s ease-out";
-        wheel.style.transform = `rotate(${deg}deg)`;
+    let startAngle = 0;
+    const arc = Math.PI * 2 / prizes.length;
 
-        sound.currentTime = 0;
-        sound.play();
+    function drawWheel() {
+      for (let i = 0; i < prizes.length; i++) {
+        const angle = startAngle + i * arc;
 
-        setTimeout(() => {
-          const prize = prizes[Math.floor(Math.random() * prizes.length)];
-          result.textContent = `You got: ${prize}`;
-        }, 3000);
-      }, 10);
+        // Sector
+        ctx.fillStyle = colors[i];
+        ctx.beginPath();
+        ctx.moveTo(200, 200);
+        ctx.arc(200, 200, 200, angle, angle + arc, false);
+        ctx.lineTo(200, 200);
+        ctx.fill();
+
+        // Text
+        ctx.save();
+        ctx.fillStyle = "white";
+        ctx.translate(200, 200);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.font = "16px Arial";
+        ctx.fillText(prizes[i], 180, 10);
+        ctx.restore();
+      }
+    }
+
+    drawWheel();
+
+    function spin() {
+      result.textContent = "";
+      spinSound.currentTime = 0;
+      spinSound.play();
+
+      const spins = 5; // full rounds
+      const randomIndex = Math.floor(Math.random() * prizes.length);
+      const anglePerPrize = 360 / prizes.length;
+      const finalAngle = 360 * spins + (prizes.length - randomIndex) * anglePerPrize;
+
+      let currentAngle = 0;
+      const duration = 3000;
+      const startTime = performance.now();
+
+      function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const angle = finalAngle * easeOut;
+
+        ctx.clearRect(0, 0, 400, 400);
+        startAngle = angle * Math.PI / 180;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          result.textContent = "You got: " + prizes[randomIndex];
+        }
+      }
+
+      requestAnimationFrame(animate);
     }
   </script>
-
 </body>
 </html>
