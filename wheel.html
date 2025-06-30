@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>วงล้อสุ่มรางวัล</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+    }
+
+    canvas {
+      margin-top: 20px;
+      background-color: #222;
+      border-radius: 50%;
+      box-shadow: 0 0 20px #f90;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 10px 30px;
+      margin-top: 20px;
+      cursor: pointer;
+      background-color: #f90;
+      border: none;
+      border-radius: 5px;
+      color: white;
+    }
+
+    #result {
+      font-size: 24px;
+      margin-top: 20px;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎡 หมุนวงล้อสุ่มรางวัล!</h1>
+<canvas id="wheel" width="300" height="300"></canvas><br>
+<button onclick="spin()">หมุนเลย!</button>
+<p id="result"></p>
+
+<audio id="tickSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_c7b6e020fa.mp3"></audio>
+
+<script>
+  const prizes = ["ห้องพักฟรี", "อาหารเช้า", "อัปเกรดห้อง", "น้ำดื่มฟรี", "ของที่ระลึก", "ส่วนลด 10%"];
+  const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"];
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+  const radius = canvas.width / 2;
+  const tickSound = document.getElementById("tickSound");
+
+  let angle = 0;
+  let spinning = false;
+  let lightAngle = 0;
+
+  function drawWheel(offset = 0) {
+    const slice = 2 * Math.PI / prizes.length;
+    for (let i = 0; i < prizes.length; i++) {
+      const startAngle = i * slice + offset;
+      const endAngle = startAngle + slice;
+
+      // วาดชิ้นเค้ก
+      ctx.beginPath();
+      ctx.moveTo(radius, radius);
+      ctx.arc(radius, radius, radius, startAngle, endAngle);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.stroke();
+
+      // วาดข้อความ
+      ctx.save();
+      ctx.translate(radius, radius);
+      ctx.rotate(startAngle + slice / 2);
+      ctx.fillStyle = "#fff";
+      ctx.font = "14px sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(prizes[i], radius - 10, 10);
+      ctx.restore();
+    }
+
+    drawLights(lightAngle);
+  }
+
+  function drawLights(offset) {
+    const lightCount = 30;
+    for (let i = 0; i < lightCount; i++) {
+      const angle = (2 * Math.PI / lightCount) * i + offset;
+      const x = radius + Math.cos(angle) * (radius + 10);
+      const y = radius + Math.sin(angle) * (radius + 10);
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = i % 2 === 0 ? '#ff0' : '#fff';
+      ctx.fill();
+    }
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+
+    let spinTime = 0;
+    const totalSpin = Math.random() * 2000 + 3000;
+    const tickInterval = 100;
+
+    const soundTimer = setInterval(() => {
+      tickSound.currentTime = 0;
+      tickSound.play();
+    }, tickInterval);
+
+    const animate = () => {
+      spinTime += 30;
+      angle += 0.1 + (totalSpin - spinTime) / 1000;
+      lightAngle += 0.2; // เอฟเฟกต์ไฟหมุน
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawWheel(angle);
+      if (spinTime < totalSpin) {
+        requestAnimationFrame(animate);
+      } else {
+        clearInterval(soundTimer);
+        const slice = 2 * Math.PI / prizes.length;
+        const index = Math.floor(((2 * Math.PI - (angle % (2 * Math.PI))) % (2 * Math.PI)) / slice);
+        document.getElementById("result").innerText = "คุณได้: " + prizes[index];
+        spinning = false;
+      }
+    };
+
+    animate();
+  }
+
+  drawWheel();
+</script>
+
+</body>
+</html>
