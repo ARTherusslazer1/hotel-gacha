@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ระบบสุ่มกาชาโรงแรม</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 50px;
+    }
+    button {
+      font-size: 24px;
+      padding: 15px 40px;
+      margin-top: 30px;
+      cursor: pointer;
+    }
+    #result {
+      font-size: 28px;
+      margin-top: 50px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎁 สุ่มกาชาโรงแรม 🎉</h1>
+  <button onclick="draw()">คลิกเพื่อสุ่ม!</button>
+  <div id="result"></div>
+
+  <script>
+    const prizes = [
+      "🎉 อัพเกรดห้องพักฟรี",
+      "☕ คูปองกาแฟ 1 แก้ว",
+      "🕒 เช็คอินก่อนเวลาได้",
+      "🎁 ของขวัญพิเศษ",
+      "😅 ลองใหม่พรุ่งนี้นะ!"
+    ];
+
+    function draw() {
+      const prize = prizes[Math.floor(Math.random() * prizes.length)];
+      document.getElementById("result").textContent = "คุณได้รับ: " + prize;
+    }
+  </script>
+</body>
+</html>
