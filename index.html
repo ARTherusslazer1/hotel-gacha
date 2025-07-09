@@ -1,153 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Hotel Gacha</title>
+  <meta charset="UTF-8">
+  <title>Hotel Gacha Premium</title>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      background: #111;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1551963831-b3b1ca40c98e') no-repeat center center fixed;
+      background-size: cover;
       color: white;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      height: 100vh;
+      overflow: hidden;
+      text-shadow: 1px 1px 3px #000;
     }
-
     h1 {
-      margin-bottom: 20px;
-      font-size: 2.5em;
+      margin: 20px 0 10px 0;
+      font-size: 3em;
     }
-
-    .wheel-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
+    #logo {
+      width: 120px;
+      margin-top: 20px;
     }
-
-    canvas {
-      border-radius: 50%;
-      box-shadow: 0 0 30px #ff0;
-      background-color: #fff;
-    }
-
-    button {
-      margin-top: 30px;
-      padding: 20px 50px;
-      font-size: 20px;
-      background-color: #28a745;
-      color: white;
+    #start-button, #skip-button, #home-button {
+      padding: 15px 30px;
+      font-size: 1.4em;
       border: none;
       border-radius: 10px;
+      margin-top: 20px;
       cursor: pointer;
+      background-color: #FFDC00;
+      color: #111;
     }
-
-    .result {
+    #reward-text {
+      font-size: 2em;
       margin-top: 30px;
-      font-size: 24px;
-      color: #ffd700;
+      text-align: center;
+    }
+    #reward-video {
+      width: 720px;
+      max-width: 90vw;
+      border: 3px solid white;
+      margin-top: 20px;
+      display: none;
+    }
+    #log {
+      margin-top: 30px;
+      font-size: 1em;
+      background-color: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 10px;
+      max-width: 90vw;
+    }
+    #reward-list {
+      margin-top: 20px;
+      font-size: 1.2em;
+      background-color: rgba(0,0,0,0.4);
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+    ul {
+      padding-left: 20px;
     }
   </style>
 </head>
 <body>
+  <img id="logo" src="https://via.placeholder.com/120x120?text=Logo" alt="Hotel Logo">
+  <h1>Hotel Gacha Premium</h1>
 
-  <h1>🎰 Hotel Gacha Wheel</h1>
-  <div class="wheel-container">
-    <canvas id="wheel" width="400" height="400"></canvas>
+  <div id="reward-list">
+    <strong>🎁 Prize List:</strong>
+    <ul>
+      <li>Coke</li>
+      <li>Hot Drink (Tea / Coffee / Mixed)</li>
+      <li>Beer</li>
+      <li>Free Breakfast</li>
+      <li>Mama Instant Cup Noodles</li>
+      <li>1 Free Night – Standard Room (KB Wing)</li>
+      <li>THB 50 Discount on Room</li>
+      <li>Spin Again</li>
+      <li>Sorry, No Prize</li>
+    </ul>
   </div>
 
-  <button onclick="spin()">Spin Now</button>
-  <div class="result" id="result"></div>
+  <div id="reward-text">🎰 Tap below to spin the gacha!</div>
+  <button id="start-button" onclick="startGacha()">🎲 SPIN</button>
 
-  <audio id="spinSound" src="https://cdn.pixabay.com/audio/2023/01/05/audio_ae0dbecc15.mp3"></audio>
+  <video id="reward-video" controls>
+    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <button id="skip-button" style="display:none;" onclick="skipVideo()">⏭ Skip</button>
+  <button id="home-button" style="display:none;" onclick="location.reload()">🔁 Back to Home</button>
+
+  <div id="log">
+    <strong>Spin History:</strong>
+    <ul id="log-list" style="list-style: none; padding-left: 0;"></ul>
+  </div>
+
+  <audio id="tick-sound" src="https://www.soundjay.com/button/beep-07.mp3" preload="auto"></audio>
 
   <script>
-    const canvas = document.getElementById("wheel");
-    const ctx = canvas.getContext("2d");
-    const result = document.getElementById("result");
-    const spinSound = document.getElementById("spinSound");
-
-    const prizes = [
-      "10% Discount",
-      "Free Breakfast",
-      "Room Upgrade",
-      "Free Sauna",
-      "฿100 Off",
-      "Free Drink",
-      "Hotel Gift",
-      "No Prize"
+    const rewardOptions = [
+      { name: "Coke", weight: 20 },
+      { name: "Hot Drink (Tea / Coffee / Mixed)", weight: 20 },
+      { name: "Beer", weight: 5 },
+      { name: "Free Breakfast", weight: 5 },
+      { name: "Mama Instant Cup Noodles", weight: 15 },
+      { name: "1 Free Night – Standard Room (KB Wing)", weight: 3 },
+      { name: "THB 50 Discount on Room", weight: 10 },
+      { name: "Spin Again", weight: 12 },
+      { name: "Sorry, No Prize", weight: 10 }
     ];
 
-    const colors = [
-      "#f44336", "#e91e63", "#9c27b0", "#3f51b5",
-      "#2196f3", "#4caf50", "#ff9800", "#795548"
-    ];
-
-    let startAngle = 0;
-    const arc = Math.PI * 2 / prizes.length;
-
-    function drawWheel() {
-      for (let i = 0; i < prizes.length; i++) {
-        const angle = startAngle + i * arc;
-
-        // Sector
-        ctx.fillStyle = colors[i];
-        ctx.beginPath();
-        ctx.moveTo(200, 200);
-        ctx.arc(200, 200, 200, angle, angle + arc, false);
-        ctx.lineTo(200, 200);
-        ctx.fill();
-
-        // Text
-        ctx.save();
-        ctx.fillStyle = "white";
-        ctx.translate(200, 200);
-        ctx.rotate(angle + arc / 2);
-        ctx.textAlign = "right";
-        ctx.font = "16px Arial";
-        ctx.fillText(prizes[i], 180, 10);
-        ctx.restore();
+    function getWeightedReward() {
+      const total = rewardOptions.reduce((sum, item) => sum + item.weight, 0);
+      const rand = Math.random() * total;
+      let cumulative = 0;
+      for (const item of rewardOptions) {
+        cumulative += item.weight;
+        if (rand < cumulative) return item.name;
       }
+      return rewardOptions[rewardOptions.length - 1].name;
     }
 
-    drawWheel();
+    let spinCount = 0;
+    let spinInterval;
 
-    function spin() {
-      result.textContent = "";
-      spinSound.currentTime = 0;
-      spinSound.play();
+    function startGacha() {
+      const rewardText = document.getElementById("reward-text");
+      const video = document.getElementById("reward-video");
+      const skipBtn = document.getElementById("skip-button");
+      const startBtn = document.getElementById("start-button");
 
-      const spins = 5; // full rounds
-      const randomIndex = Math.floor(Math.random() * prizes.length);
-      const anglePerPrize = 360 / prizes.length;
-      const finalAngle = 360 * spins + (prizes.length - randomIndex) * anglePerPrize;
+      startBtn.disabled = true;
+      rewardText.innerHTML = "🎲 Spinning...";
 
-      let currentAngle = 0;
-      const duration = 3000;
-      const startTime = performance.now();
+      let index = 0;
+      spinInterval = setInterval(() => {
+        rewardText.innerHTML = `🎰 ${rewardOptions[index].name}`;
+        const tickClone = document.getElementById("tick-sound").cloneNode();
+        tickClone.play();
+        index = (index + 1) % rewardOptions.length;
+      }, 120);
 
-      function animate(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        const angle = finalAngle * easeOut;
+      setTimeout(() => {
+        clearInterval(spinInterval);
+        const result = getWeightedReward();
+        spinCount += 1;
 
-        ctx.clearRect(0, 0, 400, 400);
-        startAngle = angle * Math.PI / 180;
-        drawWheel();
+        rewardText.innerHTML = `🏆 You got: <strong>${result}</strong>`;
+        startBtn.style.display = "none";
 
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          result.textContent = "You got: " + prizes[randomIndex];
-        }
-      }
+        setTimeout(() => {
+          video.style.display = "block";
+          video.play();
+          skipBtn.style.display = "inline-block";
+        }, 1000);
 
-      requestAnimationFrame(animate);
+        const logList = document.getElementById("log-list");
+        const logItem = document.createElement("li");
+        logItem.textContent = `Spin #${spinCount}: ${result}`;
+        logList.prepend(logItem);
+      }, 2500);
+    }
+
+    function skipVideo() {
+      const video = document.getElementById("reward-video");
+      const skipBtn = document.getElementById("skip-button");
+      const homeBtn = document.getElementById("home-button");
+      const rewardText = document.getElementById("reward-text");
+
+      video.pause();
+      video.style.display = "none";
+      skipBtn.style.display = "none";
+      homeBtn.style.display = "inline-block";
+      rewardText.innerHTML = "📸 " + rewardText.innerText;
     }
   </script>
 </body>
