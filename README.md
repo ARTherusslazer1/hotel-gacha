@@ -1,1 +1,1 @@
-# hotel-gacha
+# hotel-gift
