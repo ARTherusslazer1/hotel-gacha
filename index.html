@@ -21,7 +21,10 @@
     h1 {
       margin: 20px 0 10px 0;
       font-size: 3em;
-    }   
+    }
+    #logo {
+      width: 120px;
+      margin-top: 20px;
     }
     #start-button, #skip-button, #home-button {
       padding: 15px 30px;
@@ -38,7 +41,7 @@
       margin-top: 30px;
       text-align: center;
     }
-    #reward-video {
+    #reward-video, #reward-image {
       width: 720px;
       max-width: 90vw;
       border: 3px solid white;
@@ -73,7 +76,7 @@
     <strong>🎁 Prize List:</strong>
     <ul>
       <li>Coke</li>
-      <li>Hot & Cold Drink (Tea / Coffee / Mixed)</li>
+      <li>Hot Drink (Tea / Coffee / Mixed)</li>
       <li>Beer</li>
       <li>Free Breakfast</li>
       <li>Mama Instant Cup Noodles</li>
@@ -92,15 +95,22 @@
     Your browser does not support the video tag.
   </video>
 
+  <img id="reward-image" src="coke_reward.jpg" alt="Reward Image" />
+
   <button id="skip-button" style="display:none;" onclick="skipVideo()">⏭ Skip</button>
   <button id="home-button" style="display:none;" onclick="location.reload()">🔁 Back to Home</button>
 
- 
+  <div id="log">
+    <strong>Spin History:</strong>
+    <ul id="log-list" style="list-style: none; padding-left: 0;"></ul>
+  </div>
+
+  <audio id="tick-sound" src="https://www.soundjay.com/button/beep-07.mp3" preload="auto"></audio>
 
   <script>
     const rewardOptions = [
       { name: "Coke", weight: 20 },
-      { name: "Hot & Cold Drink (Tea / Coffee / Mixed)", weight: 20 },
+      { name: "Hot Drink (Tea / Coffee / Mixed)", weight: 20 },
       { name: "Beer", weight: 5 },
       { name: "Free Breakfast", weight: 5 },
       { name: "Mama Instant Cup Noodles", weight: 20 },
@@ -127,11 +137,15 @@
     function startGacha() {
       const rewardText = document.getElementById("reward-text");
       const video = document.getElementById("reward-video");
+      const image = document.getElementById("reward-image");
       const skipBtn = document.getElementById("skip-button");
       const startBtn = document.getElementById("start-button");
 
       startBtn.disabled = true;
       rewardText.innerHTML = "🎲 Spinning...";
+      image.style.display = "none";
+      video.style.display = "none";
+      skipBtn.style.display = "none";
 
       let index = 0;
       spinInterval = setInterval(() => {
@@ -153,6 +167,12 @@
           video.style.display = "block";
           video.play();
           skipBtn.style.display = "inline-block";
+
+          if (result === "Coke") {
+            setTimeout(() => {
+              image.style.display = "block";
+            }, 3000);
+          }
         }, 1000);
 
         const logList = document.getElementById("log-list");
